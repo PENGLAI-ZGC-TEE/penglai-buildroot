@@ -1,0 +1,5 @@
+config BR2_PACKAGE_PENGLAI_SDK
+	bool "penglai-sdk"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	help
+	  Build the embedded Penglai SDK demos and install /root/host and /root/prime.

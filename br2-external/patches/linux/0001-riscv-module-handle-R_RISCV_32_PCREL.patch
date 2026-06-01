@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Fri, 27 Mar 2026 19:20:00 +0800
+Subject: [PATCH] riscv: module: handle R_RISCV_32_PCREL relocations
+
+Buildroot's current RISC-V toolchain emits R_RISCV_32_PCREL relocations for
+the Penglai out-of-tree kernel module. The 5.10 module loader in this tree
+does not handle relocation type 57, so insmod fails with:
+
+  Unknown relocation type 57
+
+Teach the module loader to apply the relocation the same way newer kernels do.
+---
+ arch/riscv/kernel/module.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/arch/riscv/kernel/module.c b/arch/riscv/kernel/module.c
+index c3310a68a..bfead629f 100644
+--- a/arch/riscv/kernel/module.c
++++ b/arch/riscv/kernel/module.c
+@@ -295,8 +295,17 @@ static int apply_r_riscv_sub64_rela(struct module *me, u32 *location,
+ 	return 0;
+ }
+ 
++static int apply_r_riscv_pcrel_32_rela(struct module *me, u32 *location,
++				       Elf_Addr v)
++{
++	ptrdiff_t offset = (void *)v - (void *)location;
++
++	*location = (*location & 0xffff0000) | (offset & 0xffff);
++	return 0;
++}
++
+ static int (*reloc_handlers_rela[]) (struct module *me, u32 *location,
+-				Elf_Addr v) = {
++				     Elf_Addr v) = {
+ 	[R_RISCV_32]			= apply_r_riscv_32_rela,
+ 	[R_RISCV_64]			= apply_r_riscv_64_rela,
+ 	[R_RISCV_BRANCH]		= apply_r_riscv_branch_rela,
+@@ -318,6 +327,7 @@ static int (*reloc_handlers_rela[]) (struct module *me, u32 *location,
+ 	[R_RISCV_ADD64]			= apply_r_riscv_add64_rela,
+ 	[R_RISCV_SUB32]			= apply_r_riscv_sub32_rela,
+ 	[R_RISCV_SUB64]			= apply_r_riscv_sub64_rela,
++	[R_RISCV_32_PCREL]		= apply_r_riscv_pcrel_32_rela,
+ };
+ 
+ int apply_relocate_add(Elf_Shdr *sechdrs, const char *strtab,
+-- 
+2.49.0

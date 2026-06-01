@@ -1,0 +1,5 @@
+config BR2_PACKAGE_PENGLAI_DRIVER
+	bool "penglai-driver"
+	depends on BR2_LINUX_KERNEL
+	help
+	  Build and install the Penglai kernel module for the NEMU image.

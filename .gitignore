@@ -1,0 +1,14 @@
+simpoint_bbv
+.vscode
+.agents/
+.codex/
+output/
+br2-external/board/nanhuv3a/nemu/system.dtb
+
+# Local source checkouts. Add these back explicitly later if they become
+# submodules or vendored source in this repository.
+/NEMU/
+/buildroot/
+/debian-linux-kernel/
+/opensbi/
+/riscv-rootfs/

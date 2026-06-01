@@ -1,0 +1,100 @@
+/dts-v1/;
+
+/ {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	compatible = "freechips,rocketchip-unknown-dev";
+	model = "freechips,rocketchip-unknown";
+
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		stdout-path = "serial0";
+		bootargs = " earlyprintk earlycon ";
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <1000000>;
+		cpu0: cpu@0 {
+			clock-frequency = <0>;
+			compatible = "UCAS,COOSCA1.0", "riscv";
+			d-cache-block-size = <64>;
+			d-cache-sets = <64>;
+			d-cache-size = <16384>;
+			d-tlb-sets = <1>;
+			d-tlb-size = <32>;
+			device_type = "cpu";
+			i-cache-block-size = <64>;
+			i-cache-sets = <64>;
+			i-cache-size = <16384>;
+			i-tlb-sets = <1>;
+			i-tlb-size = <32>;
+			mmu-type = "riscv,sv39";
+			reg = <0x0>;
+			riscv,isa = "rv64imafdc";
+			status = "okay";
+			timebase-frequency = <1000000>;
+			tlb-split;
+			cpu_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x2 0x00000000>;
+	};
+
+	plic: interrupt-controller@3c000000 {
+		#interrupt-cells = <1>;
+		compatible = "riscv,plic0";
+		interrupt-controller;
+		interrupts-extended = <&cpu_intc 9 &cpu_intc 11>;
+		reg = <0x0 0x3c000000 0x0 0x4000000>;
+		reg-names = "control";
+		riscv,max-priority = <7>;
+		riscv,ndev = <64>;
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "freechips,rocketchip-unknown-soc", "simple-bus";
+		ranges;
+
+		debug-controller@0 {
+			compatible = "sifive,debug-013", "riscv,debug-013";
+			reg = <0x0 0x0 0x0 0x1000>;
+			reg-names = "control";
+		};
+
+		clint@38000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <&cpu_intc 3 &cpu_intc 7>;
+			reg = <0x0 0x38000000 0x0 0x10000>;
+			reg-names = "control";
+			clock-frequency-mhz = <500>;
+		};
+
+		uart0: serial@60000000 {
+			compatible = "xilinx,uartlite", "xlnx,xps-uartlite-1.00.a";
+			reg = <0x0 0x40600000 0x0 0x1000>;
+			current-speed = <115200>;
+			reg-names = "control";
+			interrupt-parent = <&plic>;
+			interrupts = <3>;
+		};
+
+		sdhci@40002000 {
+			compatible = "nemu-sdhost";
+			reg = <0x0 0x40002000 0x0 0x1000>;
+		};
+	};
+};
