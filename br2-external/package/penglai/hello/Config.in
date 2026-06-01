@@ -1,4 +1,0 @@
-config BR2_PACKAGE_PENGLAI_HELLO
-	bool "penglai-hello"
-	help
-	  Legacy riscv-rootfs hello sample migrated into Buildroot.

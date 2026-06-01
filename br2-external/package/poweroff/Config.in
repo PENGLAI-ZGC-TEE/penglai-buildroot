@@ -1,4 +1,0 @@
-config BR2_PACKAGE_POWEROFF
-	bool "poweroff"
-	help
-	  Legacy riscv-rootfs poweroff sample migrated into Buildroot.
