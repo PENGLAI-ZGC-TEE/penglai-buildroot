@@ -5,7 +5,7 @@
 ################################################################################
 
 PENGLAI_DRIVER_VERSION = 1.0
-PENGLAI_DRIVER_SITE = $(BR2_EXTERNAL_ZGC_TEE_PATH)/../riscv-rootfs/apps/penglai-driver
+PENGLAI_DRIVER_SITE = $(BR2_EXTERNAL_ZGC_TEE_PATH)/package/penglai/driver/src
 PENGLAI_DRIVER_SITE_METHOD = local
 PENGLAI_DRIVER_LICENSE = Proprietary
 PENGLAI_DRIVER_DEPENDENCIES = linux
