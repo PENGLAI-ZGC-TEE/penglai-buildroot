@@ -34,14 +34,16 @@ export OPENSBI_NEMU_SKIP_SPMP_ENABLE ?= 1
 NEMU_BINARY=$(NEMU_HOME)/build/riscv64-nemu-interpreter
 BUILDROOT_OUTPUT ?= $(shell pwd)/output/nemu
 BUILDROOT_OVERRIDE_FILE ?= $(BUILDROOT_OUTPUT)/local.mk
-BUILDROOT_MAKE = $(MAKE) -C $(BUILDROOT_HOME) BR2_EXTERNAL=$(BR2_EXTERNAL_ZGC_TEE_PATH) O=$(BUILDROOT_OUTPUT)
-BUILDROOT_LOCAL_MAKE = $(MAKE) -C $(BUILDROOT_HOME) BR2_EXTERNAL=$(BR2_EXTERNAL_ZGC_TEE_PATH) BR2_PACKAGE_OVERRIDE_FILE=$(BUILDROOT_OVERRIDE_FILE) O=$(BUILDROOT_OUTPUT)
+BUILDROOT_JOBS ?= $(shell nproc 2>/dev/null || echo 8)
+BUILDROOT_ENV = env -u LD_LIBRARY_PATH
+BUILDROOT_MAKE = $(BUILDROOT_ENV) $(MAKE) -j$(BUILDROOT_JOBS) -C $(BUILDROOT_HOME) BR2_EXTERNAL=$(BR2_EXTERNAL_ZGC_TEE_PATH) O=$(BUILDROOT_OUTPUT)
+BUILDROOT_LOCAL_MAKE = $(BUILDROOT_ENV) $(MAKE) -j$(BUILDROOT_JOBS) -C $(BUILDROOT_HOME) BR2_EXTERNAL=$(BR2_EXTERNAL_ZGC_TEE_PATH) BR2_PACKAGE_OVERRIDE_FILE=$(BUILDROOT_OVERRIDE_FILE) O=$(BUILDROOT_OUTPUT)
 BUILDROOT_NEMU_DEFCONFIG ?= zgc_tee_nanhuv3a_nemu_defconfig
 BUILDROOT_NEMU_DTS ?= $(BR2_EXTERNAL_ZGC_TEE_PATH)/board/nanhuv3a/nemu/system.dtb
 BUILDROOT_NEMU_DTS_SRC ?= $(BR2_EXTERNAL_ZGC_TEE_PATH)/board/nanhuv3a/nemu/system.dts
 BUILDROOT_NEMU_IMG ?= $(BUILDROOT_OUTPUT)/images/fw_payload.bin
 
-.PHONY: all buildroot-check buildroot-local-overrides buildroot-nemu buildroot-nemu-local buildroot-nemu-defconfig buildroot-nemu-defconfig-local buildroot-nemu-dts clean dts help init linux nemu nemu-menu nemu-pmptable opensbi penglai-sdk run run-buildroot run-buildroot-local
+.PHONY: all buildroot-check buildroot-local-overrides buildroot-nemu buildroot-nemu-local buildroot-nemu-defconfig buildroot-nemu-defconfig-local buildroot-nemu-dts clean dts help init linux nemu nemu-menu nemu-pmptable opensbi penglai-sdk run run-buildroot run-buildroot-existing run-buildroot-local
 
 all: opensbi
 	@echo "make linux with Penglai-TEE success"
@@ -55,6 +57,7 @@ help:
 	@echo "  make buildroot-nemu-defconfig       # reproducible git-based config"
 	@echo "  make buildroot-nemu                 # reproducible git-based build"
 	@echo "  make run-buildroot                  # run reproducible git-based build"
+	@echo "  make run-buildroot-existing         # run existing Buildroot image without rebuilding"
 	@echo "  make buildroot-nemu-defconfig-local # local Linux/OpenSBI sources"
 	@echo "  make buildroot-nemu-local           # local Linux/OpenSBI sources"
 	@echo "  make run-buildroot-local            # run local-source build"
@@ -123,6 +126,11 @@ buildroot-nemu-local: buildroot-local-overrides buildroot-nemu-dts
 	$(BUILDROOT_LOCAL_MAKE)
 
 run-buildroot: buildroot-nemu nemu
+	@test -f "$(BUILDROOT_NEMU_IMG)" || { echo "missing Buildroot OpenSBI payload at $(BUILDROOT_NEMU_IMG)"; exit 1; }
+	$(NEMU_BINARY) $(BUILDROOT_NEMU_IMG)
+
+run-buildroot-existing:
+	@test -x "$(NEMU_BINARY)" || { echo "missing NEMU binary at $(NEMU_BINARY)"; exit 1; }
 	@test -f "$(BUILDROOT_NEMU_IMG)" || { echo "missing Buildroot OpenSBI payload at $(BUILDROOT_NEMU_IMG)"; exit 1; }
 	$(NEMU_BINARY) $(BUILDROOT_NEMU_IMG)
 
