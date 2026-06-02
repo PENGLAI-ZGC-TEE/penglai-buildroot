@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case "$1" in
+	start|"")
+		grep -qw dsid /proc/cgroups || exit 0
+
+		mkdir -p /sys/fs/cgroup
+		mountpoint -q /sys/fs/cgroup || mount -t tmpfs cgroup_root /sys/fs/cgroup
+		mkdir -p /sys/fs/cgroup/dsid
+		mountpoint -q /sys/fs/cgroup/dsid || mount -t cgroup -o dsid dsid /sys/fs/cgroup/dsid
+		mkdir -p /sys/fs/cgroup/dsid/test-1 /sys/fs/cgroup/dsid/test-2
+
+		echo 1 > /sys/fs/cgroup/dsid/test-1/dsid.dsid-set
+		echo 2 > /sys/fs/cgroup/dsid/test-2/dsid.dsid-set
+		;;
+	stop)
+		;;
+	*)
+		echo "Usage: $0 {start|stop}"
+		exit 1
+		;;
+esac

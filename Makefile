@@ -42,8 +42,15 @@ BUILDROOT_NEMU_DEFCONFIG ?= zgc_tee_nanhuv3a_nemu_defconfig
 BUILDROOT_NEMU_DTS ?= $(BR2_EXTERNAL_ZGC_TEE_PATH)/board/nanhuv3a/nemu/system.dtb
 BUILDROOT_NEMU_DTS_SRC ?= $(BR2_EXTERNAL_ZGC_TEE_PATH)/board/nanhuv3a/nemu/system.dts
 BUILDROOT_NEMU_IMG ?= $(BUILDROOT_OUTPUT)/images/fw_payload.bin
+BUILDROOT_FPGA_OUTPUT ?= $(shell pwd)/output/fpga
+BUILDROOT_FPGA_OVERRIDE_FILE ?= $(BUILDROOT_FPGA_OUTPUT)/local.mk
+BUILDROOT_FPGA_MAKE = $(BUILDROOT_ENV) $(MAKE) -j$(BUILDROOT_JOBS) -C $(BUILDROOT_HOME) BR2_EXTERNAL=$(BR2_EXTERNAL_ZGC_TEE_PATH) O=$(BUILDROOT_FPGA_OUTPUT)
+BUILDROOT_FPGA_LOCAL_MAKE = $(BUILDROOT_ENV) $(MAKE) -j$(BUILDROOT_JOBS) -C $(BUILDROOT_HOME) BR2_EXTERNAL=$(BR2_EXTERNAL_ZGC_TEE_PATH) BR2_PACKAGE_OVERRIDE_FILE=$(BUILDROOT_FPGA_OVERRIDE_FILE) O=$(BUILDROOT_FPGA_OUTPUT)
+BUILDROOT_FPGA_DEFCONFIG ?= zgc_tee_nanhuv3a_fpga_defconfig
+BUILDROOT_FPGA_DTS ?= $(BR2_EXTERNAL_ZGC_TEE_PATH)/board/nanhuv3a/fpga/system.dtb
+BUILDROOT_FPGA_DTS_SRC ?= $(BR2_EXTERNAL_ZGC_TEE_PATH)/board/nanhuv3a/fpga/system.dts
 
-.PHONY: all buildroot-check buildroot-local-overrides buildroot-nemu buildroot-nemu-local buildroot-nemu-defconfig buildroot-nemu-defconfig-local buildroot-nemu-dts clean dts help init linux nemu nemu-menu nemu-pmptable opensbi penglai-sdk run run-buildroot run-buildroot-existing run-buildroot-local
+.PHONY: all buildroot-check buildroot-fpga buildroot-fpga-defconfig buildroot-fpga-defconfig-local buildroot-fpga-dts buildroot-fpga-local buildroot-fpga-local-overrides buildroot-local-overrides buildroot-nemu buildroot-nemu-local buildroot-nemu-defconfig buildroot-nemu-defconfig-local buildroot-nemu-dts clean dts help init linux nemu nemu-menu nemu-pmptable opensbi penglai-sdk run run-buildroot run-buildroot-existing run-buildroot-local
 
 all: opensbi
 	@echo "make linux with Penglai-TEE success"
@@ -61,6 +68,11 @@ help:
 	@echo "  make buildroot-nemu-defconfig-local # local Linux/OpenSBI sources"
 	@echo "  make buildroot-nemu-local           # local Linux/OpenSBI sources"
 	@echo "  make run-buildroot-local            # run local-source build"
+	@echo "Buildroot/FPGA targets:"
+	@echo "  make buildroot-fpga-defconfig       # reproducible git-based config"
+	@echo "  make buildroot-fpga                 # reproducible git-based build"
+	@echo "  make buildroot-fpga-defconfig-local # local Linux/OpenSBI sources"
+	@echo "  make buildroot-fpga-local           # local Linux/OpenSBI sources"
 
 opensbi: linux dts
 	$(MAKE) -C $(SBI_HOME) PLATFORM=$(PLATFORM) CROSS_COMPILE=$(CROSS_COMPILE) FW_FDT_PATH=$(FW_FDT_PATH) FW_PAYLOAD_PATH=$(FW_PAYLOAD_PATH) PLATFORM_RISCV_ISA=$(OPENSBI_PLATFORM_RISCV_ISA) NEMU_SKIP_SPMP_ENABLE=$(OPENSBI_NEMU_SKIP_SPMP_ENABLE)
@@ -109,6 +121,10 @@ buildroot-local-overrides: buildroot-check
 	@mkdir -p $(BUILDROOT_OUTPUT)
 	@printf "LINUX_OVERRIDE_SRCDIR=%s\nOPENSBI_OVERRIDE_SRCDIR=%s\n" "$(LINUX_HOME)" "$(SBI_HOME)" > $(BUILDROOT_OVERRIDE_FILE)
 
+buildroot-fpga-local-overrides: buildroot-check
+	@mkdir -p $(BUILDROOT_FPGA_OUTPUT)
+	@printf "LINUX_OVERRIDE_SRCDIR=%s\nOPENSBI_OVERRIDE_SRCDIR=%s\n" "$(LINUX_HOME)" "$(SBI_HOME)" > $(BUILDROOT_FPGA_OVERRIDE_FILE)
+
 buildroot-nemu-dts:
 	@mkdir -p $(dir $(BUILDROOT_NEMU_DTS))
 	dtc -O dtb -o $(BUILDROOT_NEMU_DTS) $(BUILDROOT_NEMU_DTS_SRC)
@@ -126,6 +142,24 @@ buildroot-nemu: buildroot-check buildroot-nemu-dts
 buildroot-nemu-local: buildroot-local-overrides buildroot-nemu-dts
 	$(BUILDROOT_LOCAL_MAKE)
 	$(BUILDROOT_LOCAL_MAKE) opensbi-rebuild
+
+buildroot-fpga-dts:
+	@mkdir -p $(dir $(BUILDROOT_FPGA_DTS))
+	dtc -O dtb -o $(BUILDROOT_FPGA_DTS) $(BUILDROOT_FPGA_DTS_SRC)
+
+buildroot-fpga-defconfig: buildroot-check
+	$(BUILDROOT_FPGA_MAKE) $(BUILDROOT_FPGA_DEFCONFIG)
+
+buildroot-fpga-defconfig-local: buildroot-fpga-local-overrides
+	$(BUILDROOT_FPGA_LOCAL_MAKE) $(BUILDROOT_FPGA_DEFCONFIG)
+
+buildroot-fpga: buildroot-check buildroot-fpga-dts
+	$(BUILDROOT_FPGA_MAKE)
+	$(BUILDROOT_FPGA_MAKE) opensbi-rebuild
+
+buildroot-fpga-local: buildroot-fpga-local-overrides buildroot-fpga-dts
+	$(BUILDROOT_FPGA_LOCAL_MAKE)
+	$(BUILDROOT_FPGA_LOCAL_MAKE) opensbi-rebuild
 
 run-buildroot: buildroot-nemu nemu
 	@test -f "$(BUILDROOT_NEMU_IMG)" || { echo "missing Buildroot OpenSBI payload at $(BUILDROOT_NEMU_IMG)"; exit 1; }

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+case "$1" in
+	start|"")
+		if [ -f /root/penglai/penglai.ko ]; then
+			insmod /root/penglai/penglai.ko
+		fi
+
+		if [ ! -c /dev/penglai_enclave_dev ]; then
+			mknod /dev/penglai_enclave_dev c 10 63
+		fi
+		;;
+	stop)
+		;;
+	*)
+		echo "Usage: $0 {start|stop}"
+		exit 1
+		;;
+esac
