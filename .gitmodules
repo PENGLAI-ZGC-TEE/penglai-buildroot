@@ -1,3 +1,14 @@
 [submodule "buildroot"]
 	path = buildroot
 	url = https://gitlab.com/buildroot.org/buildroot.git
+[submodule "opensbi"]
+	path = opensbi
+	url = git@github.com:PENGLAI-ZGC-TEE/opensbi.git
+	branch = penglai-zgc-tee
+[submodule "debian-linux-kernel"]
+	path = debian-linux-kernel
+	url = git@github.com:PENGLAI-ZGC-TEE/debian-linux-kernel.git
+[submodule "NEMU"]
+	path = NEMU
+	url = git@github.com:PENGLAI-ZGC-TEE/NEMU.git
+	branch = hosttlb-tmp
