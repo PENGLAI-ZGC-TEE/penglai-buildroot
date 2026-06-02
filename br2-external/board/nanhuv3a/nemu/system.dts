@@ -40,6 +40,7 @@
 			timebase-frequency = <1000000>;
 			tlb-split;
 			cpu_intc: interrupt-controller {
+				#address-cells = <0>;
 				#interrupt-cells = <1>;
 				compatible = "riscv,cpu-intc";
 				interrupt-controller;
@@ -53,6 +54,7 @@
 	};
 
 	plic: interrupt-controller@3c000000 {
+		#address-cells = <0>;
 		#interrupt-cells = <1>;
 		compatible = "riscv,plic0";
 		interrupt-controller;
@@ -83,7 +85,7 @@
 			clock-frequency-mhz = <500>;
 		};
 
-		uart0: serial@60000000 {
+		uart0: serial@40600000 {
 			compatible = "xilinx,uartlite", "xlnx,xps-uartlite-1.00.a";
 			reg = <0x0 0x40600000 0x0 0x1000>;
 			current-speed = <115200>;

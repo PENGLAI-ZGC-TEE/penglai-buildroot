@@ -1,4 +1,4 @@
 menu "Penglai packages"
-source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/penglai/driver/Config.in"
-source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/penglai/sdk/Config.in"
+source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/penglai-driver/Config.in"
+source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/penglai-sdk/Config.in"
 endmenu

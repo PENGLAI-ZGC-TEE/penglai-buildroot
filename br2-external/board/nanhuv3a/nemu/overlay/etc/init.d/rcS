@@ -1,21 +1,6 @@
 #!/bin/sh
 
-pwd
-ls
-
-if [ -f /root/penglai/penglai.ko ]; then
-	insmod /root/penglai/penglai.ko
-fi
-
-if [ -c /dev/penglai_enclave_dev ]; then
-	:
-else
-	mknod /dev/penglai_enclave_dev c 10 63
-fi
-
-echo Penglai Enclave Start
-echo -------------------------------------------------------
-
-if [ -x /root/host ] && [ -x /root/prime ]; then
-	/root/host /root/prime
-fi
+for script in /etc/init.d/S[0-9][0-9]*; do
+	[ -x "${script}" ] || continue
+	"${script}" start
+done
