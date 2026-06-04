@@ -1,0 +1,12 @@
+config BR2_PACKAGE_PLATFORM_DTB
+	bool "platform-dtb"
+	select BR2_PACKAGE_HOST_DTC
+	help
+	  Build the device tree blob used by the selected platform.
+
+config BR2_PACKAGE_PLATFORM_DTB_PLATFORM
+	string "Platform DTB platform"
+	default "nemu"
+	depends on BR2_PACKAGE_PLATFORM_DTB
+	help
+	  Platform directory under board/nanhuv3a that provides system.dts.
