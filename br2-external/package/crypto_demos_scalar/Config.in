@@ -1,0 +1,5 @@
+config BR2_PACKAGE_CRYPTO_DEMOS_SCALAR
+	bool "crypto_demos_scalar"
+	help
+	  Build and install RISC-V scalar crypto demo programs.
+

@@ -2,4 +2,5 @@ menu "Penglai packages"
 source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/platform-dtb/Config.in"
 source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/penglai-driver/Config.in"
 source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/penglai-sdk/Config.in"
+source "$BR2_EXTERNAL_ZGC_TEE_PATH/package/crypto_demos_scalar/Config.in"
 endmenu

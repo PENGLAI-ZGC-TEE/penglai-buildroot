@@ -1,0 +1,35 @@
+#!/bin/sh
+
+case "$1" in
+	start|"")
+		echo Crypto Scalar Demo Start
+		echo -------------------------------------------------------
+
+		for demo in \
+			/root/crypto_demos_scalar/aes_ctr_inline \
+			/root/crypto_demos_scalar/aes_gcm_inline \
+			/root/crypto_demos_scalar/sha256_inline \
+			/root/crypto_demos_scalar/sm3_inline \
+			/root/crypto_demos_scalar/sm4_ecb_inline
+		do
+			if [ -x "$demo" ]; then
+				echo "Running $demo"
+				"$demo"
+				ret=$?
+				echo "Exit code: $ret"
+				if [ "$ret" -ne 0 ]; then
+					echo "FAILED: $demo"
+				fi
+			else
+				echo "Missing $demo"
+			fi
+			echo -------------------------------------------------------
+		done
+		;;
+	stop)
+		;;
+	*)
+		echo "Usage: $0 {start|stop}"
+		exit 1
+		;;
+esac
