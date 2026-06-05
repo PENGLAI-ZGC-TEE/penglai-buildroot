@@ -1,6 +1,7 @@
 [submodule "buildroot"]
 	path = buildroot
-	url = https://gitlab.com/buildroot.org/buildroot.git
+	url = git@github.com:PENGLAI-ZGC-TEE/buildroot.git
+	branch = penglai-platform-dtb
 [submodule "opensbi"]
 	path = opensbi
 	url = git@github.com:PENGLAI-ZGC-TEE/opensbi.git
