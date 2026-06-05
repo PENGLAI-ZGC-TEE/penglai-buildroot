@@ -63,6 +63,45 @@ debian-linux-kernel/
 opensbi/
 ```
 
+## 重新构建局部组件
+
+Buildroot 依赖 stamp 判断 package 是否已经构建完成；修改 `br2-external/package/` 下的 local source package，或者在 `LOCAL=1` 模式下修改本地 Linux/OpenSBI 源码后，普通 `build` 不一定会自动重新编译对应组件。
+
+顶层 Makefile 提供了 `rebuild` 入口：
+
+```bash
+make PLATFORM=nemu rebuild
+make PLATFORM=fpga rebuild
+```
+
+`rebuild` 通过 `PLATFORM` 选择对应 Buildroot output，`nemu` 和 `fpga` 都使用同一套规则。不传 `PACKAGE` 时，默认重新构建 `br2-external/package/` 下的全部一级 package 目录；后续新增 package 目录也会自动包含进去。例如：
+
+```text
+penglai-driver platform-dtb penglai-sdk
+```
+
+`LOCAL=1` 时，默认额外重新构建本地 Linux/OpenSBI：
+
+```bash
+make PLATFORM=nemu LOCAL=1 rebuild
+make PLATFORM=fpga LOCAL=1 rebuild
+```
+
+等价于重新构建这些项目包，并额外追加：
+
+```text
+linux opensbi
+```
+
+也可以显式指定 package，使用逗号分隔：
+
+```bash
+make PLATFORM=nemu rebuild PACKAGE=penglai-sdk
+make PLATFORM=nemu LOCAL=1 rebuild PACKAGE=linux,opensbi,penglai-sdk
+```
+
+显式传入 `PACKAGE` 后，只会重新构建指定项，不会自动追加 `linux` 和 `opensbi`。`rebuild` 只负责重建指定组件，不等价于完整 `build`，不会自动完成最终 rootfs/payload 刷新。
+
 ## 设备树流程
 
 设备树由 `platform-dtb` Buildroot package 生成：

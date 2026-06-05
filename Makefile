@@ -23,16 +23,29 @@ BUILDROOT_JOBS ?= $(shell nproc 2>/dev/null || echo 8)
 BUILDROOT_ENV := env -u LD_LIBRARY_PATH
 BUILDROOT_OVERRIDE_ARG := $(if $(LOCAL_ENABLED),BR2_PACKAGE_OVERRIDE_FILE=$(BUILDROOT_OVERRIDE_FILE))
 BUILDROOT_MAKE = $(BUILDROOT_ENV) $(MAKE) -j$(BUILDROOT_JOBS) -C $(BUILDROOT_HOME) BR2_EXTERNAL=$(BR2_EXTERNAL_ZGC_TEE_PATH) $(BUILDROOT_OVERRIDE_ARG) O=$(BUILDROOT_OUTPUT_DIR)
+EXTERNAL_PACKAGES := $(shell find $(BR2_EXTERNAL_ZGC_TEE_PATH)/package -mindepth 1 -maxdepth 1 -type d -printf '%f ')
+LOCAL_SOURCE_PACKAGES := penglai-driver penglai-sdk
+comma := ,
+empty :=
+space := $(empty) $(empty)
+REBUILD_PACKAGES := $(or $(strip $(subst $(comma),$(space),$(PACKAGE))),packages)
+REBUILD_PACKAGE_LIST := $(strip $(foreach pkg,$(REBUILD_PACKAGES),$(if $(filter packages,$(pkg)),$(EXTERNAL_PACKAGES),$(pkg))))
+DEFAULT_LOCAL_REBUILD_PACKAGES := $(if $(LOCAL_ENABLED),linux opensbi)
+EFFECTIVE_REBUILD_PACKAGE_LIST := $(strip $(REBUILD_PACKAGE_LIST) $(if $(strip $(PACKAGE)),,$(DEFAULT_LOCAL_REBUILD_PACKAGES)))
 
 NEMU_BINARY := $(NEMU_HOME)/build/riscv64-nemu-interpreter
 PAYLOAD_BIN := $(BUILDROOT_OUTPUT_DIR)/images/fw_payload.bin
 
-.PHONY: help buildroot-check prepare-output defconfig build nemu-rebuild menuconfig clean-output
+.PHONY: help buildroot-check prepare-output defconfig build rebuild nemu-rebuild menuconfig clean-output
 
 help:
 	@echo "Buildroot flow:"
 	@echo "  make PLATFORM=nemu defconfig"
 	@echo "  make PLATFORM=nemu build"
+	@echo "  make PLATFORM=nemu rebuild"
+	@echo "  make PLATFORM=nemu LOCAL=1 rebuild"
+	@echo "  make PLATFORM=nemu rebuild PACKAGE=linux,opensbi,penglai-sdk"
+	@echo "  make PLATFORM=nemu rebuild PACKAGE=packages"
 	@echo "  make PLATFORM=nemu run"
 	@echo "  make PLATFORM=nemu run-direct"
 	@echo "  make PLATFORM=fpga defconfig"
@@ -64,6 +77,18 @@ defconfig: prepare-output
 build: prepare-output
 	+$(BUILDROOT_MAKE)
 	+$(BUILDROOT_MAKE) opensbi-rebuild
+
+rebuild: prepare-output
+	@set -e; \
+	for pkg in $(EFFECTIVE_REBUILD_PACKAGE_LIST); do \
+		if echo " $(LOCAL_SOURCE_PACKAGES) " | grep -q " $$pkg "; then \
+			echo "Rebuilding $$pkg from local source"; \
+			$(BUILDROOT_MAKE) "$$pkg-dirclean" "$$pkg"; \
+		else \
+			echo "Rebuilding $$pkg"; \
+			$(BUILDROOT_MAKE) "$$pkg-rebuild"; \
+		fi; \
+	done
 
 ifeq ($(PLATFORM),nemu)
 .PHONY: run run-direct

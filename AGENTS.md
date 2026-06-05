@@ -39,6 +39,23 @@ Local source override mode must be explicit:
 
 Keep git mode and local mode clearly separated. Do not make default builds consume local workspace trees.
 
+## Rebuild Helper
+
+Use the top-level `rebuild` target for explicit package rebuilds when source changes are not picked up by Buildroot stamps:
+
+- `make PLATFORM=nemu rebuild`
+- `make PLATFORM=fpga rebuild`
+- `make PLATFORM=nemu LOCAL=1 rebuild`
+- `make PLATFORM=fpga LOCAL=1 rebuild`
+- `make PLATFORM=nemu rebuild PACKAGE=penglai-sdk`
+- `make PLATFORM=nemu LOCAL=1 rebuild PACKAGE=linux,opensbi,penglai-sdk`
+
+The helper is platform-generic. `PLATFORM` selects the Buildroot output tree and defconfig family; only `nemu` has run targets.
+
+When `PACKAGE` is omitted, `rebuild` defaults to every directory under `br2-external/package/`. In `LOCAL=1` mode it also appends `linux opensbi` so local kernel/OpenSBI source edits are rebuilt.
+
+When `PACKAGE` is set, only the specified comma-separated packages are rebuilt. Local-source packages listed in the top-level `LOCAL_SOURCE_PACKAGES` use `dirclean` before rebuild so Buildroot re-syncs their source tree. `rebuild` is not a full `build`; it does not guarantee final rootfs or payload regeneration.
+
 ## DTB Flow
 
 Device trees are built by the Buildroot package:
