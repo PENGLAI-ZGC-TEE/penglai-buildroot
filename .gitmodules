@@ -12,4 +12,4 @@
 [submodule "NEMU"]
 	path = NEMU
 	url = git@github.com:PENGLAI-ZGC-TEE/NEMU.git
-	branch = hosttlb-tmp
+	branch = main
