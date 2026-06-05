@@ -1,80 +1,71 @@
 # AGENTS
 
-This repository is a workspace-style project built around several source trees:
+This repository is the `ZGC_TEE` workspace. Current active targets are `nanhuv3a/nemu` and `nanhuv3a/fpga`.
 
+Main source trees:
+
+- `buildroot/`: Buildroot checkout
+- `br2-external/`: ZGC_TEE Buildroot external tree
 - `opensbi/`: local OpenSBI source tree
 - `debian-linux-kernel/`: local Linux source tree
 - `NEMU/`: simulator source tree
-- `riscv-rootfs/`: legacy rootfs content, currently being migrated
-- `buildroot/`: Buildroot checkout
-- `br2-external/`: ZGC_TEE external tree for project integration
+- `riscv-rootfs/`: migration source content only, not the long-term rootfs entry
 
-## Project Shape
+## Build Entry
 
-This repository represents the larger `ZGC_TEE` project.
+Use the top-level Makefile:
 
-- `nanhuv3a` is one project line under `ZGC_TEE`
-- supported target families are expected to include `nemu`, `qemu`, `fpga`, and `board`
-- current active integration target is `nanhuv3a/nemu`
+- `make PLATFORM=nemu defconfig`
+- `make PLATFORM=nemu build`
+- `make PLATFORM=nemu run`
+- `make PLATFORM=fpga defconfig`
+- `make PLATFORM=fpga build`
 
-Relevant Buildroot board layout:
+`PLATFORM` currently supports `nemu` and `fpga`.
 
-- `br2-external/board/nanhuv3a/common/`
-- `br2-external/board/nanhuv3a/nemu/`
-- `br2-external/board/nanhuv3a/qemu/`
-- `br2-external/board/nanhuv3a/fpga/`
-- `br2-external/board/nanhuv3a/board/`
+## Source Modes
 
-## Build Modes
+Default builds use reproducible git sources from the Buildroot defconfig:
 
-There are two Buildroot source modes:
+- `make PLATFORM=nemu build`
+- `LOCAL=0` is the default
+- output directory: `output/<platform>/`
 
-1. Reproducible git mode
-   - `make buildroot-nemu-defconfig`
-   - `make buildroot-nemu`
-   - `make run-buildroot`
-   - uses the git-based Linux/OpenSBI source settings from `br2-external/configs/zgc_tee_nanhuv3a_nemu_defconfig`
+Local source override mode must be explicit:
 
-2. Local source override mode
-   - `make buildroot-nemu-defconfig-local`
-   - `make buildroot-nemu-local`
-   - `make run-buildroot-local`
-   - generates `output/nemu/local.mk`
-   - overrides Buildroot sources with local `debian-linux-kernel/` and `opensbi/`
+- `make PLATFORM=nemu LOCAL=1 build`
+- generates `output/<platform>-local/local.mk`
+- overrides Buildroot Linux/OpenSBI sources with local `debian-linux-kernel/` and `opensbi/`
 
-Default `make buildroot-nemu` must stay on git mode.
-Local workspace trees must only be used through the `*-local` targets.
+Keep git mode and local mode clearly separated. Do not make default builds consume local workspace trees.
 
-## Current DTS Path
+## DTB Flow
 
-For the current NEMU flow:
+Device trees are built by the Buildroot package:
 
-- source DTS: `opensbi/dts/system.dts`
-- generated DTB: `br2-external/board/nanhuv3a/nemu/system.dtb`
+- package: `br2-external/package/platform-dtb/`
+- source DTS: `br2-external/board/nanhuv3a/<platform>/system.dts`
+- generated DTB: `output/<platform>/images/platform.dtb`
 
-Buildroot passes that generated DTB to OpenSBI.
+OpenSBI consumes the generated DTB with:
 
-## Important Constraints
+- `FW_FDT_PATH=$(BINARIES_DIR)/platform.dtb`
 
-- Do not change the NEMU device model just to make Buildroot boot.
-  Legacy `make run` already shows OpenSBI/Linux output, so boot regressions should be treated as migration/config mismatches first.
-- Keep `buildroot-nemu` and `buildroot-nemu-local` behavior clearly separated.
-- Keep Buildroot integration changes in `br2-external/` or top-level orchestration where possible.
-- Avoid copying Linux/OpenSBI source into Buildroot or `br2-external/`.
-- `riscv-rootfs/` should be treated as migration source content, not the long-term rootfs build entry.
+The `buildroot/` submodule patches `boot/opensbi/opensbi.mk` so OpenSBI depends on `platform-dtb` when `BR2_PACKAGE_PLATFORM_DTB=y`. Do not reintroduce top-level `platform-dtb-rebuild opensbi-rebuild` sequencing for normal builds.
 
-## Known Buildroot Notes
+## Constraints
 
-- `br2-external/configs/zgc_tee_nanhuv3a_nemu_defconfig` is the current active defconfig.
-- `BR2_TARGET_ROOTFS_INITRAMFS=y` is intentionally enabled to stay closer to the legacy NEMU boot flow.
-- OpenSBI needs the external patch under `br2-external/patches/opensbi/` to disable stack protector in the bare-metal build under the current Buildroot toolchain.
+- Keep Buildroot integration in `br2-external/`, top-level orchestration, or intentional Buildroot package patches.
+- Do not copy Linux/OpenSBI source into Buildroot or `br2-external/`.
+- Do not change the NEMU device model to hide Buildroot/DTS/config migration issues.
+- `BR2_TARGET_ROOTFS_INITRAMFS=y` is intentional for the current NEMU flow.
+- Repeated `make PLATFORM=nemu build` may still regenerate rootfs images and relink the kernel Image because initramfs is enabled.
+- OpenSBI still needs the external patches under `br2-external/patches/opensbi/` for the current Buildroot toolchain and NEMU flow.
 
-## Penglai Packages
+## Packages
 
-Penglai-related packages are grouped under:
+Project packages are included through `br2-external/package/Config.in`:
 
-- `br2-external/package/penglai/hello/`
-- `br2-external/package/penglai/driver/`
-- `br2-external/package/penglai/sdk/`
-
-They are included through `br2-external/package/Config.in`.
+- `br2-external/package/platform-dtb/`
+- `br2-external/package/penglai-driver/`
+- `br2-external/package/penglai-sdk/`
