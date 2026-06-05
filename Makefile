@@ -27,13 +27,14 @@ BUILDROOT_MAKE = $(BUILDROOT_ENV) $(MAKE) -j$(BUILDROOT_JOBS) -C $(BUILDROOT_HOM
 NEMU_BINARY := $(NEMU_HOME)/build/riscv64-nemu-interpreter
 PAYLOAD_BIN := $(BUILDROOT_OUTPUT_DIR)/images/fw_payload.bin
 
-.PHONY: help buildroot-check prepare-output defconfig build run nemu menuconfig clean-output
+.PHONY: help buildroot-check prepare-output defconfig build nemu-rebuild menuconfig clean-output
 
 help:
 	@echo "Buildroot flow:"
 	@echo "  make PLATFORM=nemu defconfig"
 	@echo "  make PLATFORM=nemu build"
 	@echo "  make PLATFORM=nemu run"
+	@echo "  make PLATFORM=nemu run-direct"
 	@echo "  make PLATFORM=fpga defconfig"
 	@echo "  make PLATFORM=fpga build"
 	@echo ""
@@ -62,17 +63,24 @@ defconfig: prepare-output
 
 build: prepare-output
 	+$(BUILDROOT_MAKE)
+	+$(BUILDROOT_MAKE) opensbi-rebuild
 
 ifeq ($(PLATFORM),nemu)
-run: build nemu
+.PHONY: run run-direct
+
+run: build $(NEMU_BINARY)
 	@test -f "$(PAYLOAD_BIN)" || { echo "missing Buildroot OpenSBI payload at $(PAYLOAD_BIN)"; exit 1; }
 	$(NEMU_BINARY) -b $(PAYLOAD_BIN)
-else
-run: build
-	@echo "FPGA payload: $(PAYLOAD_BIN)"
+
+run-direct: $(NEMU_BINARY)
+	@test -f "$(PAYLOAD_BIN)" || { echo "missing Buildroot OpenSBI payload at $(PAYLOAD_BIN)"; exit 1; }
+	$(NEMU_BINARY) -b $(PAYLOAD_BIN)
 endif
 
-nemu:
+$(NEMU_BINARY):
+	+$(MAKE) -C $(NEMU_HOME) -j$(BUILDROOT_JOBS)
+
+nemu-rebuild:
 	+$(MAKE) -C $(NEMU_HOME) -j$(BUILDROOT_JOBS)
 
 menuconfig: prepare-output
