@@ -77,7 +77,7 @@ The `buildroot/` submodule patches `boot/opensbi/opensbi.mk` so OpenSBI depends 
 - Do not change the NEMU device model to hide Buildroot/DTS/config migration issues.
 - `BR2_TARGET_ROOTFS_INITRAMFS=y` is intentional for the current NEMU flow.
 - Repeated `make PLATFORM=nemu build` may still regenerate rootfs images and relink the kernel Image because initramfs is enabled.
-- OpenSBI still needs the external patches under `br2-external/patches/opensbi/` for the current Buildroot toolchain and NEMU flow.
+- The pinned OpenSBI revision includes the Buildroot toolchain, Xilinx UARTLite, NEMU SPMP, and PMA boot-print fixes; do not reintroduce duplicate external patches.
 
 ## Packages
 
