@@ -8,7 +8,7 @@ MIRACL = mrcore.c mrarth0.c mrarth1.c mrarth2.c mrcurve.c mrxgcd.c \
 		mrsroot.c mrlucas.c mrrand.c
 MIRACL_SRC = $(addprefix source/miracl/, $(MIRACL))
 MIRARL_OBJ = $(patsubst %.c,%.o, $(MIRACL_SRC))
-MIR_CFLAGS = -c -O2 -I include/miracl -I/usr/lib
+MIR_CFLAGS = -c -O2 -I include/miracl
 
 SM2 = SM2_sv.c SM3.c SM4.c SM4_Enc.c Random.c
 SM2_SRC = $(addprefix source/, $(SM2))
