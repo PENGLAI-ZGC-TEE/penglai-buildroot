@@ -19,6 +19,16 @@
 make PLATFORM=nemu defconfig
 ```
 
+初始化并构建 Nanhu V3A NEMU：
+
+```bash
+make nemu-init
+make nemu-build
+```
+
+`nemu-init` 使用 `NEMU/configs/riscv64-nanhuv3a_defconfig` 生成 NEMU
+配置，`nemu-build` 只负责编译，不会重置配置。
+
 构建 NEMU 使用的 OpenSBI payload：
 
 ```bash
